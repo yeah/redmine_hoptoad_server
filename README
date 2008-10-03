@@ -13,7 +13,7 @@ Now, download and install the HoptoadNotifier following the excellent instructio
 When it comes to creating your config/initializers/hoptoad.rb file, deviate from the standard and put in something like this:
 
 HoptoadNotifier.configure do |config|
-  config.api_key = {:project => 'my_redmine_project_identifier', # the one you specified for your project in Redmine
+  config.api_key = {:project => 'my_redmine_project_identifier', # the identifier you specified for your project in Redmine
                     :tracker => 'Bug',                           # the name of your Tracker of choice in Redmine
                     :api_key => 'my_redmine_api_key',            # the key you generated before in Redmine (NOT YOUR HOPTOAD API KEY!)
                     :category => 'Development',                  # the name of a ticket category (optional.)

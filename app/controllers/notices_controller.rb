@@ -1,12 +1,13 @@
 class NoticesController < ApplicationController
-unloadable  
+  before_filter :check_if_login_required, :except => 'index'
+  unloadable  
   def index
     notice = YAML.load(request.raw_post)['notice']
     redmine_params = YAML.load(notice['api_key'])
     
     if authorized = Setting.mail_handler_api_key == redmine_params[:api_key]
       
-      project = Project.find_by_name(redmine_params[:project])
+      project = Project.find_by_identifier(redmine_params[:project])
       tracker = project.trackers.find_by_name(redmine_params[:tracker])
       author = User.anonymous
 
