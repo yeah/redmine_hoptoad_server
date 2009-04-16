@@ -21,7 +21,8 @@ HoptoadNotifier.configure do |config|
                     :priority => 5								 # the default priority (use a number, not a name. optional.)
 				   }.to_yaml
   config.host = 'my_redmine_host.com'							 # the hostname your Redmine runs at
-  config.port = 443												 # the port your Redmine runs at		
+  config.port = 443												 # the port your Redmine runs at
+  config.secure = true                                           # sends data to your server via SSL (optional.)
 end
 
 You're done. You can start receiving your Exceptions in Redmine!
