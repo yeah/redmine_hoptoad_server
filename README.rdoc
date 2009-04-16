@@ -1,4 +1,4 @@
-= hoptoad_server
+= Hoptoad Server
 
 This is a simple Redmine plugin that makes Redmine act like a Hoptoad server. All exceptions caught and sent by HoptoadNotifier will create or update an Issue in Redmine.
 
