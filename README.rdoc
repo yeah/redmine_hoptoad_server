@@ -28,14 +28,22 @@ When it comes to creating your config/initializers/hoptoad.rb file, deviate from
 
 You're done. You can start receiving your Exceptions in Redmine!
 
-=== Optional Configuration
+=== More Configuration (please read on!)
 
 After you received your first exception in Redmine, you will notice two new custom fields in the project(s) you've received the exceptions for. Those are *Backtrace* *filter* and *Repository* *root*.
 
 ==== Backtrace filter
 
-If you'd like to (and we really recommond you do) filter the backtraces that Notifier reports, you can add comma separated strings to that field. Every line in a backtrace will be scanned against those strings and matching lines *will* *be* *removed*. I usually set my filter to "[GEM_ROOT]", but if you're using plugins which tend to clutter up your backtraces, you might want to include those as well. Like this for example:  "[GEM_ROOT],[RAILS_ROOT]/vendor/plugins/newrelic_rpm".
+If you'd like to (and we really recommend you do!) filter the backtraces that Notifier reports, you can add comma separated strings to that field. Every line in a backtrace will be scanned against those strings and matching lines *will* *be* *removed*. I usually set my filter to "[GEM_ROOT]", but if you're using plugins which tend to clutter up your backtraces, you might want to include those as well. Like this for example:  "[GEM_ROOT],[RAILS_ROOT]/vendor/plugins/newrelic_rpm".
 
 ==== Repository root
 
 All Issues created will have a source link in their description which -- provided that you have your source repository linked to your Redmine project -- leads you directly to the file and line in your code that has caused the exception. Your repository structure most likely won't match the structure of your deployed code, so you can add an additional repository root. Just use "trunk" for a general SVN setup for instance.
+
+== License
+
+MIT
+
+== Author
+
+Jan Schulz-Hofen, ROCKET RENTALS (http://rocket-rentals.de)
