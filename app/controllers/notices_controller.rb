@@ -34,8 +34,8 @@ class NoticesController < ApplicationController
       subject = "#{error_class} in #{filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','')}"[0,255]
       
       # build description including a link to source repository
-      repo_root = project.custom_value_for(@repository_root_field).value rescue nil
-      repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').split(':')
+      repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
+      repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
       description = "Redmine Notifier reported an Error related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
 
       issue = Issue.find_or_initialize_by_subject_and_project_id_and_tracker_id_and_author_id(
@@ -52,9 +52,11 @@ class NoticesController < ApplicationController
         issue.priority_id = redmine_params[:priority] unless redmine_params[:priority].blank?
         issue.description = description
 
-        # make sure that custom field error class is associated to this project and tracker
+        # make sure that custom fields are associated to this project and tracker
         project.issue_custom_fields << @error_class_field unless project.issue_custom_fields.include?(@error_class_field)
         tracker.custom_fields << @error_class_field unless tracker.custom_fields.include?(@error_class_field)
+        project.issue_custom_fields << @occurences_field unless project.issue_custom_fields.include?(@occurences_field)
+        tracker.custom_fields << @occurences_field unless tracker.custom_fields.include?(@occurences_field)
         
         # set custom field error class
         issue.custom_values.build(:custom_field => @error_class_field, :value => error_class)
@@ -62,6 +64,13 @@ class NoticesController < ApplicationController
 
       issue.save!
 
+      # increment occurences custom field
+      value = issue.custom_value_for(@occurences_field) || issue.custom_values.build(:custom_field => @occurences_field, :value => 0)
+      value.value = (value.value.to_i + 1).to_s
+      logger.error value.value
+      value.save!
+
+      # update journal
       journal = issue.init_journal(
         author, 
         "h4. Error message\n\n<pre>#{error_message}</pre>\n\n" +
@@ -72,6 +81,7 @@ class NoticesController < ApplicationController
         "h4. Environment\n\n<pre>#{notice['environment'].to_yaml}</pre>"
       )
 
+      # reopen issue
       if issue.status.blank? or issue.status.is_closed?                                                                                                        
         issue.status = IssueStatus.find(:first, :conditions => {:is_default => true}, :order => 'position ASC')
       end
@@ -98,6 +108,12 @@ class NoticesController < ApplicationController
     if @error_class_field.new_record?
       @error_class_field.attributes = {:field_format => 'string', :searchable => true, :is_filter => true}
       @error_class_field.save(false)
+    end
+
+    @occurences_field = IssueCustomField.find_or_initialize_by_name('# Occurences')
+    if @occurences_field.new_record?
+      @occurences_field.attributes = {:field_format => 'int', :default_value => '0', :is_filter => true}
+      @occurences_field.save(false)
     end
 
     @trace_filter_field = ProjectCustomField.find_or_initialize_by_name('Backtrace filter')
