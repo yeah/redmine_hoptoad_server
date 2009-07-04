@@ -6,8 +6,8 @@ class NoticesController < ApplicationController
   unloadable  
 
   TRACE_FILTERS = [
-    /^"On\sline\s#\d+\sof/,
-    /^"\d+:/
+    /^On\sline\s#\d+\sof/,
+    /^\d+:/
   ]
 
   def index
@@ -36,14 +36,13 @@ class NoticesController < ApplicationController
       # build description including a link to source repository
       repo_root = project.custom_value_for(@repository_root_field).value rescue nil
       repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').split(':')
-      description = "Redmine Notifier reported an Error related to source:#{repo_root}#{repo_file}#L#{repo_line}"
+      description = "Redmine Notifier reported an Error related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
 
-      issue = Issue.find_or_initialize_by_subject_and_project_id_and_tracker_id_and_author_id_and_description(
+      issue = Issue.find_or_initialize_by_subject_and_project_id_and_tracker_id_and_author_id(
         subject,
         project.id,
         tracker.id,
-        author.id,
-        description
+        author.id
       )
                                                                                                               
       if issue.new_record?
@@ -51,6 +50,7 @@ class NoticesController < ApplicationController
         issue.category = IssueCategory.find_by_name(redmine_params[:category]) unless redmine_params[:category].blank?
         issue.assigned_to = User.find_by_login(redmine_params[:assigned_to]) unless redmine_params[:assigned_to].blank?
         issue.priority_id = redmine_params[:priority] unless redmine_params[:priority].blank?
+        issue.description = description
 
         # make sure that custom field error class is associated to this project and tracker
         project.issue_custom_fields << @error_class_field unless project.issue_custom_fields.include?(@error_class_field)
