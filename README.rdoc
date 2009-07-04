@@ -27,3 +27,5 @@ When it comes to creating your config/initializers/hoptoad.rb file, deviate from
   end
 
 You're done. You can start receiving your Exceptions in Redmine!
+
+= Changelog
