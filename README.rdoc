@@ -34,4 +34,4 @@ After you received your first exception in Redmine, you will notice two new cust
 
 ==== Backtrace filter
 
-If you'd like to (and we really recommond you do) filter the backtraces that Notifier reports, you can add comma separated strings to that field. Every line in a backtrace will be scanned against those strings and matching lines *will be removed*. I usually set my filter to `[GEM_ROOT]`, but if you're using plugins which tend to clutter up your backtraces, you might want to include those as well. Like this for example:  `[GEM_ROOT],[RAILS_ROOT]/vendor/plugins/newrelic_rpm`.
+If you'd like to (and we really recommond you do) filter the backtraces that Notifier reports, you can add comma separated strings to that field. Every line in a backtrace will be scanned against those strings and matching lines *will be removed*. I usually set my filter to +[GEM_ROOT]+, but if you're using plugins which tend to clutter up your backtraces, you might want to include those as well. Like this for example:  +[GEM_ROOT],[RAILS_ROOT]/vendor/plugins/newrelic_rpm+.
