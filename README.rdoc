@@ -28,4 +28,10 @@ When it comes to creating your config/initializers/hoptoad.rb file, deviate from
 
 You're done. You can start receiving your Exceptions in Redmine!
 
-= Changelog
+=== Optional Configuration
+
+After you received your first exception in Redmine, you will notice two new custom fields in the project(s) you've received the exceptions for. Those are *Backtrace filter* and *Repository root*.
+
+==== Backtrace filter
+
+If you'd like to (and we really recommond you do) filter the backtraces that Notifier reports, you can add comma separated strings to that field. Every line in a backtrace will be scanned against those strings and matching lines *will be removed*. I usually set my filter to `[GEM_ROOT]`, but if you're using plugins which tend to clutter up your backtraces, you might want to include those as well. Like this for example:  `[GEM_ROOT],[RAILS_ROOT]/vendor/plugins/newrelic_rpm`
