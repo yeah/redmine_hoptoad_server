@@ -8,7 +8,7 @@ Just install the Plugin following the general Redmine plugin installation instru
 
 Then, go to Administration -> Settings -> Incoming emails in your Redmine and generate an API key.
 
-Now, download and install the HoptoadNotifier following the excellent instructions on their github page http://github.com/thoughtbot/hoptoad_notifier.
+Now, download and install the HoptoadNotifier following the excellent instructions on their github page http://github.com/thoughtbot/hoptoad_notifier. Note, that the Redmine Hoptoad Server does not support Hoptoad's API v2. Use commit 72daea77c284d8e7989635139b530c1a8025f505 of the hoptoad_notifier and everything should work fine.
 
 When it comes to creating your config/initializers/hoptoad.rb file, deviate from the standard and put in something like this:
 
