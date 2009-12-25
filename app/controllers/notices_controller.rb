@@ -38,13 +38,9 @@ class NoticesController < ApplicationController
       repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
       description = "Redmine Notifier reported an Error related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
 
-      issue = Issue.find_or_initialize_by_subject_and_project_id_and_tracker_id_and_author_id(
-        subject,
-        project.id,
-        tracker.id,
-        author.id
-      )
-                                                                                                              
+      issue = Issue.find_by_subject_and_project_id_and_tracker_id_and_author_id(subject, project.id, tracker.id, author.id)
+      issue = Issue.new(:subject => subject, :project_id => project.id, :tracker_id => tracker.id, :author_id => author.id) unless issue
+
       if issue.new_record?
         # set standard redmine issue fields
         issue.category = IssueCategory.find_by_name(redmine_params[:category]) unless redmine_params[:category].blank?
