@@ -31,7 +31,8 @@ class NoticesController < ApplicationController
       filtered_backtrace = backtrace.reject{|line| (TRACE_FILTERS+project_trace_filters).map{|filter| line.scan(filter)}.flatten.compact.uniq.any?}
       
       # build subject by removing method name and '[RAILS_ROOT]', make sure it fits in a varchar
-      subject = "#{error_class} in #{filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','')}"[0,255]
+      subject = error_class.to_s
+      subject << " in #{filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','')}"[0,255] unless filtered_backtrace.blank?
       
       # build description including a link to source repository
       repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
