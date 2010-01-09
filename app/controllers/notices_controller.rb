@@ -35,9 +35,12 @@ class NoticesController < ApplicationController
       subject << " in #{filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','')}"[0,255] unless filtered_backtrace.blank?
       
       # build description including a link to source repository
-      repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
-      repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
-      description = "Redmine Notifier reported an Error related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
+      description = "Redmine Notifier reported an Error"
+      if filtered_backtrace
+        repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
+        repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
+        description << " related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
+      end
 
       issue = Issue.find_by_subject_and_project_id_and_tracker_id_and_author_id(subject, project.id, tracker.id, author.id)
       issue = Issue.new(:subject => subject, :project_id => project.id, :tracker_id => tracker.id, :author_id => author.id) unless issue
@@ -71,7 +74,7 @@ class NoticesController < ApplicationController
       journal = issue.init_journal(
         author, 
         "h4. Error message\n\n<pre>#{error_message}</pre>\n\n" +
-        "h4. Filtered backtrace\n\n<pre>#{filtered_backtrace.to_yaml}</pre>\n\n" +
+        "h4. Filtered backtrace\n\n<pre>#{(filtered_backtrace||'').to_yaml}</pre>\n\n" +
         "h4. Full backtrace\n\n<pre>#{backtrace.to_yaml}</pre>\n\n" +
         "h4. Request\n\n<pre>#{notice['request'].to_yaml}</pre>\n\n" +
         "h4. Session\n\n<pre>#{notice['session'].to_yaml}</pre>\n\n" +
