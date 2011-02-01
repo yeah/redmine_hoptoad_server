@@ -36,7 +36,7 @@ class NoticesController < ApplicationController
       
       # build description including a link to source repository
       description = "Redmine Notifier reported an Error"
-      if filtered_backtrace
+      unless filtered_backtrace.blank?
         repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
         repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
         description << " related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
