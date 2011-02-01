@@ -46,4 +46,4 @@ MIT
 
 == Author
 
-Jan Schulz-Hofen, ROCKET RENTALS (http://rocket-rentals.de)
+Jan Schulz-Hofen, Planio GmbH (http://plan.io)
