@@ -19,7 +19,9 @@ When it comes to creating your config/initializers/hoptoad.rb file, deviate from
                       :api_key => 'my_redmine_api_key',            # the key you generated before in Redmine (NOT YOUR HOPTOAD API KEY!)
                       :category => 'Development',                  # the name of a ticket category (optional.)
                       :assigned_to => 'admin',                     # the login of a user the ticket should get assigned to by default (optional.)
-                      :priority => 5                               # the default priority (use a number, not a name. optional.)
+                      :priority => 5,                              # the default priority (use a number, not a name. optional.)
+                      :environment => 'staging',                   # environment, gets prepended to the issue's subject and is stored as a custom issue field. useful to distinguish errors on a test system from those on the production system(optional).
+                      :repository_root => '/some/path'             # this optional argument overrides the project wide repository root setting (see below).
                      }.to_yaml
     config.host = 'my_redmine_host.com'                            # the hostname your Redmine runs at
     config.port = 443                                              # the port your Redmine runs at

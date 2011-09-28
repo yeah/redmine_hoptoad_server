@@ -31,19 +31,21 @@ class NoticesController < ApplicationController
       filtered_backtrace = backtrace.reject{|line| (TRACE_FILTERS+project_trace_filters).map{|filter| line.scan(filter)}.flatten.compact.uniq.any?}
       
       # build subject by removing method name and '[RAILS_ROOT]', make sure it fits in a varchar
-      subject = error_class.to_s
+      subject = redmine_params[:environment] ? "[#{redmine_params[:environment]}] " : ""
+      subject << error_class.to_s
       subject << " in #{filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','')}"[0,255] unless filtered_backtrace.blank?
       
       # build description including a link to source repository
       description = "Redmine Notifier reported an Error"
       unless filtered_backtrace.blank?
-        repo_root = project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
+        repo_root = redmine_params[:repository_root]
+        repo_root ||= project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
         repo_file, repo_line = filtered_backtrace.first.split(':in').first.gsub('[RAILS_ROOT]','').gsub(/^\//,'').split(':')
         description << " related to source:#{repo_root}/#{repo_file}#L#{repo_line}"
       end
 
       issue = Issue.find_by_subject_and_project_id_and_tracker_id_and_author_id(subject, project.id, tracker.id, author.id)
-      issue = Issue.new(:subject => subject, :project_id => project.id, :tracker_id => tracker.id, :author_id => author.id) unless issue
+      issue ||= Issue.new(:subject => subject, :project_id => project.id, :tracker_id => tracker.id, :author_id => author.id)
 
       if issue.new_record?
         # set standard redmine issue fields
@@ -57,9 +59,14 @@ class NoticesController < ApplicationController
         tracker.custom_fields << @error_class_field unless tracker.custom_fields.include?(@error_class_field)
         project.issue_custom_fields << @occurences_field unless project.issue_custom_fields.include?(@occurences_field)
         tracker.custom_fields << @occurences_field unless tracker.custom_fields.include?(@occurences_field)
+        project.issue_custom_fields << @environment_field unless project.issue_custom_fields.include?(@environment_field)
+        tracker.custom_fields << @environment_field unless tracker.custom_fields.include?(@environment_field)
         
         # set custom field error class
         issue.custom_values.build(:custom_field => @error_class_field, :value => error_class)
+        unless redmine_params[:environment].blank?
+          issue.custom_values.build(:custom_field => @environment_field, :value => redmine_params[:environment])
+        end
       end
 
       issue.save!
@@ -114,6 +121,12 @@ class NoticesController < ApplicationController
     if @occurences_field.new_record?
       @occurences_field.attributes = {:field_format => 'int', :default_value => '0', :is_filter => true}
       @occurences_field.save(false)
+    end
+
+    @environment_field = IssueCustomField.find_or_initialize_by_name('Environment')
+    if @environment_field.new_record?
+      @environment_field.attributes = {:field_format => 'string', :searchable => true, :is_filter => true}
+      @environment_field.save(false)
     end
 
     @trace_filter_field = ProjectCustomField.find_or_initialize_by_name('Backtrace filter')
