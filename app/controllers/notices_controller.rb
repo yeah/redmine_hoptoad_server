@@ -76,14 +76,14 @@ class NoticesController < ActionController::Base
     subject = redmine_params[:environment] ? "[#{redmine_params[:environment]}] " : ""
     subject << error_class.to_s
     
-    subject << " in #{error_line['file'].gsub('[RAILS_ROOT]','')[0,(250-subject.length)]}:#{error_line['number']}" if error_line
+    subject << " in #{error_line['file'].gsub('[PROJECT_ROOT]','')[0,(250-subject.length)]}:#{error_line['number']}" if error_line
     
     # build description including a link to source repository
     description = "Redmine Notifier reported an Error"
     unless filtered_backtrace.blank?
       repo_root = redmine_params[:repository_root]
       repo_root ||= project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
-      description << " related to source:#{repo_root}/#{error_line['file']}#L#{error_line['number']}"
+      description << " related to source:#{repo_root}/#{error_line['file'].gsub('[PROJECT_ROOT]', '')}#L#{error_line['number']}"
     end
 
     issue = Issue.find_by_subject_and_project_id_and_tracker_id_and_author_id(subject, project.id, tracker.id, author.id)
