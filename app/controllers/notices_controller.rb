@@ -143,7 +143,7 @@ class NoticesController < ActionController::Base
   end
   
   def cleanup_path(path)
-    path.gsub(/\[(PROJECT|RAILS)_ROOT\]/,'')
+    path.gsub(/\[(PROJECT|RAILS)_ROOT\]\//,'')
   end
     
   # before_filter, checks api key and parses request
