@@ -37,7 +37,7 @@ class NoticesController < ActionController::Base
     error_message = notice['error']['message']
 
     # build filtered backtrace
-    backtrace = notice['error']['backtrace']['line'] rescue []
+    backtrace = notice['error']['backtrace'] rescue []
     filtered_backtrace = filter_backtrace project, backtrace
     error_line = filtered_backtrace.first
     
@@ -83,14 +83,14 @@ class NoticesController < ActionController::Base
     value.save!
 
     # update journal
-    text = "h4. Error message\n\n<pre>#{error_message}</pre>\n\n"
-    text << "h4. Filtered backtrace\n\n<pre>#{format_backtrace(filtered_backtrace)}</pre>\n\n" unless filtered_backtrace.blank?
-    text << "h4. Request\n\n<pre>#{format_hash notice['request']}</pre>\n\n" unless notice['request'].blank?
-    text << "h4. Session\n\n<pre>#{format_hash notice['session']}</pre>\n\n" unless notice['session'].blank?
+    text = "h4. Error message\n\n<pre>#{error_message}</pre>"
+    text << "\n\nh4. Filtered backtrace\n\n<pre>#{format_backtrace(filtered_backtrace)}</pre>" unless filtered_backtrace.blank?
+    text << "\n\nh4. Request\n\n<pre>#{format_hash notice['request']}</pre>" unless notice['request'].blank?
+    text << "\n\nh4. Session\n\n<pre>#{format_hash notice['session']}</pre>" unless notice['session'].blank?
     unless (env = (notice['server_environment'] || notice['environment'])).blank?
-      text << "h4. Environment\n\n<pre>#{format_hash env}</pre>"
+      text << "\n\nh4. Environment\n\n<pre>#{format_hash env}</pre>"
     end
-    text << "h4. Full backtrace\n\n<pre>#{format_backtrace backtrace}</pre>\n\n" unless backtrace.blank?
+    text << "\n\nh4. Full backtrace\n\n<pre>#{format_backtrace backtrace}</pre>" unless backtrace.blank?
     journal = issue.init_journal author, text
 
     # reopen issue if needed
@@ -119,9 +119,7 @@ class NoticesController < ActionController::Base
       'error' => {
         'class' => @notice['error_class'],
         'message' => @notice['error_message'],
-        'backtrace' => { 
-          'line' => parse_backtrace(@notice['back'].blank? ? @notice['backtrace'] : @notice['back'])
-        },
+        'backtrace' => parse_backtrace(@notice['back'].blank? ? @notice['backtrace'] : @notice['back'])
       }
     }
   end
@@ -164,10 +162,18 @@ class NoticesController < ActionController::Base
   end
   
   def parse_request
+    logger.debug { "hoptoad error notification:\n#{request.raw_post}" }
     case params[:action]
     when 'index_v2'
-      @notice = params[:notice]
-      @redmine_params = YAML.load(@notice['api_key'])
+      if defined?(Nokogiri)
+        @notice = HoptoadV2Notice.new request.raw_post
+        @redmine_params = @notice.redmine_params
+      else
+        # falling back to using the request body as parsed by rails.
+        # this leads to sub-optimal results for request and session info.
+        @notice = params[:notice]
+        @redmine_params = YAML.load(@notice['api_key'])
+      end
     when 'index'
       @notice = YAML.load(request.raw_post)['notice']
       @redmine_params = YAML.load(@notice['api_key'])

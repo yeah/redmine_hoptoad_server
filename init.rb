@@ -1,5 +1,12 @@
 require 'redmine'
 
+begin
+  gem 'nokogiri'
+  require 'nokogiri'
+rescue LoadError
+  Rails.logger.error "Nokogiri gem not found, parsing hoptoad API v2 requests will be sub-optimal"
+end
+
 Redmine::Plugin.register :redmine_hoptoad_server do
   name 'Redmine Hoptoad Server plugin'
   author 'Jan Schulz-Hofen, Planio GmbH'
