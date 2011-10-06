@@ -1,3 +1,5 @@
+require 'pp'
+
 class NoticesController < ActionController::Base
 
   before_filter :check_enabled
@@ -35,7 +37,8 @@ class NoticesController < ActionController::Base
     error_message = notice['error']['message']
 
     # build filtered backtrace
-    filtered_backtrace = filter_backtrace project, notice['error']['backtrace']['line']
+    backtrace = notice['error']['backtrace']['line'] rescue []
+    filtered_backtrace = filter_backtrace project, backtrace
     error_line = filtered_backtrace.first
     
     # build subject by removing method name and '[RAILS_ROOT]', make sure it fits in a varchar
@@ -80,17 +83,17 @@ class NoticesController < ActionController::Base
     value.save!
 
     # update journal
-    journal = issue.init_journal(
-      author, 
-      "h4. Error message\n\n<pre>#{error_message}</pre>\n\n" +
-      "h4. Filtered backtrace\n\n<pre>#{format_backtrace(filtered_backtrace) unless filtered_backtrace.blank?}</pre>\n\n" +
-      "h4. Full backtrace\n\n<pre>#{format_backtrace notice['error']['backtrace']['line']}</pre>\n\n" +
-      "h4. Request\n\n<pre>#{notice['request'].to_yaml}</pre>\n\n" +
-      "h4. Session\n\n<pre>#{notice['session'].to_yaml}</pre>\n\n" +
-      "h4. Environment\n\n<pre>#{notice['environment'].to_yaml}</pre>"
-    )
+    text = "h4. Error message\n\n<pre>#{error_message}</pre>\n\n"
+    text << "h4. Filtered backtrace\n\n<pre>#{format_backtrace(filtered_backtrace)}</pre>\n\n" unless filtered_backtrace.blank?
+    text << "h4. Request\n\n<pre>#{format_hash notice['request']}</pre>\n\n" unless notice['request'].blank?
+    text << "h4. Session\n\n<pre>#{format_hash notice['session']}</pre>\n\n" unless notice['session'].blank?
+    unless (env = (notice['server_environment'] || notice['environment'])).blank?
+      text << "h4. Environment\n\n<pre>#{format_hash env}</pre>"
+    end
+    text << "h4. Full backtrace\n\n<pre>#{format_backtrace backtrace}</pre>\n\n" unless backtrace.blank?
+    journal = issue.init_journal author, text
 
-    # reopen issue
+    # reopen issue if needed
     if issue.status.blank? or issue.status.is_closed?                                                                                                        
       issue.status = IssueStatus.find(:first, :conditions => {:is_default => true}, :order => 'position ASC')
     end
@@ -104,6 +107,10 @@ class NoticesController < ActionController::Base
     end
     
     render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
+  end
+  
+  def format_hash(hash)
+    PP.pp hash, ""
   end
   
   # transforms the old-style notice structure into the hoptoad v2 data format
