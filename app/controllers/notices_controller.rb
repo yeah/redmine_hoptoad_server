@@ -22,42 +22,8 @@ class NoticesController < ActionController::Base
     create_or_update_issue @redmine_params, notice
   end
   
-  def parse_backtrace(lines)
-    lines.map do |line|
-      if line =~ /(.+):(\d+)(:in `(.+)')?/
-        { 'number' => $2.to_i, 'method' => $4, 'file' => $1 }
-      else
-        logger.error "could not parse backtrace line:\n#{line}"
-      end
-    end
-  end
-  
-  # transforms the old-style notice structure into the hoptoad v2 data format
-  def v2_notice_hash(notice)
-    notice_hash = { 
-      'error' => {
-        'class' => @notice['error_class'],
-        'message' => @notice['error_message'],
-        'backtrace' => { 
-          'line' => parse_backtrace(@notice['back'].blank? ? @notice['backtrace'] : @notice['back'])
-        },
-      }
-    }
-  end
-  
-  def filter_backtrace(project, backtrace)
-    project_trace_filters = (project.custom_value_for(@trace_filter_field).value rescue '').split(/[,\s\n\r]+/)
-    backtrace.reject do |line|
-      (TRACE_FILTERS + project_trace_filters).map do |filter|
-        line['file'].scan(filter)
-      end.flatten.compact.uniq.any?
-    end
-  end
-  
-  def format_backtrace(lines)
-    lines.map{ |line| "#{line['file']}:#{line['number']}#{":in #{line['method']}" if line['method']}" }.join("\n")
-  end
-    
+  private
+
   def create_or_update_issue(redmine_params, notice)
     # redmine objects
     project = Project.find_by_identifier(redmine_params[:project])
@@ -76,14 +42,14 @@ class NoticesController < ActionController::Base
     subject = redmine_params[:environment] ? "[#{redmine_params[:environment]}] " : ""
     subject << error_class.to_s
     
-    subject << " in #{error_line['file'].gsub('[PROJECT_ROOT]','')[0,(250-subject.length)]}:#{error_line['number']}" if error_line
+    subject << " in #{cleanup_path( error_line['file'] )[0,(250-subject.length)]}:#{error_line['number']}" if error_line
     
     # build description including a link to source repository
     description = "Redmine Notifier reported an Error"
     unless filtered_backtrace.blank?
       repo_root = redmine_params[:repository_root]
       repo_root ||= project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
-      description << " related to source:#{repo_root}/#{error_line['file'].gsub('[PROJECT_ROOT]', '')}#L#{error_line['number']}"
+      description << " related to source:#{repo_root}/#{cleanup_path error_line['file']}#L#{error_line['number']}"
     end
 
     issue = Issue.find_by_subject_and_project_id_and_tracker_id_and_author_id(subject, project.id, tracker.id, author.id)
@@ -137,11 +103,50 @@ class NoticesController < ActionController::Base
       Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
     end
     
-    render :status => 200, :text => "Received bug report. Created/updated issue #{issue.id}."
+    render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
   end
   
-  private
+  # transforms the old-style notice structure into the hoptoad v2 data format
+  def v2_notice_hash(notice)
+    notice_hash = { 
+      'error' => {
+        'class' => @notice['error_class'],
+        'message' => @notice['error_message'],
+        'backtrace' => { 
+          'line' => parse_backtrace(@notice['back'].blank? ? @notice['backtrace'] : @notice['back'])
+        },
+      }
+    }
+  end
 
+  def parse_backtrace(lines)
+    lines.map do |line|
+      if line =~ /(.+):(\d+)(:in `(.+)')?/
+        { 'number' => $2.to_i, 'method' => $4, 'file' => $1 }
+      else
+        logger.error "could not parse backtrace line:\n#{line}"
+      end
+    end
+  end
+
+  def filter_backtrace(project, backtrace)
+    project_trace_filters = (project.custom_value_for(@trace_filter_field).value rescue '').split(/[,\s\n\r]+/)
+    backtrace.reject do |line|
+      (TRACE_FILTERS + project_trace_filters).map do |filter|
+        line['file'].scan(filter)
+      end.flatten.compact.uniq.any?
+    end
+  end
+  
+  def format_backtrace(lines)
+    lines.map{ |line| "#{line['file']}:#{line['number']}#{":in #{line['method']}" if line['method']}" }.join("\n")
+  end
+  
+  def cleanup_path(path)
+    path.gsub(/\[(PROJECT|RAILS)_ROOT\]/,'')
+  end
+    
+  # before_filter, checks api key and parses request
   def check_enabled
     User.current = nil
     parse_request
