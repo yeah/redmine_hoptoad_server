@@ -172,6 +172,7 @@ class NoticesController < ActionController::Base
         # falling back to using the request body as parsed by rails.
         # this leads to sub-optimal results for request and session info.
         @notice = params[:notice]
+        @notice['error']['backtrace'] = @notice['error']['backtrace']['line']
         @redmine_params = YAML.load(@notice['api_key'])
       end
     when 'index'
