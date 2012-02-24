@@ -12,11 +12,6 @@ class NoticesController < ActionController::Base
     /^\d+:/
   ]
   
-  # error classes to ignore
-  EXCEPTION_FILTERS = [
-    /ActiveRecord::RecordNotFound/
-  ]
-  
   def index_v2
     logger.debug {"received v2 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
     create_or_update_issue @redmine_params, @notice
@@ -39,9 +34,6 @@ class NoticesController < ActionController::Base
 
     # error class and message
     error_class = notice['error']['class']
-    if EXCEPTION_FILTERS.detect{|f| error_class.to_s =~ f}
-      render( :status => 200, :text => "Ignored bug report (filtered exception)." ) and return
-    end
     error_message = notice['error']['message']
 
     # build filtered backtrace
@@ -114,7 +106,7 @@ class NoticesController < ActionController::Base
       Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
     end
     
-    render :status => 201, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
+    render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
   end
   
   def format_hash(hash)
