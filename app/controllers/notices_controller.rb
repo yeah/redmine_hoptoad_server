@@ -33,20 +33,19 @@ class NoticesController < ActionController::Base
     author = User.find_by_login(redmine_params[:author]) || User.anonymous
 
     # error class and message
-    error_class = notice['error']['class']
+    error_class = notice['error']['class'].to_s
     error_message = notice['error']['message']
 
     # build filtered backtrace
     backtrace = notice['error']['backtrace'] rescue []
     filtered_backtrace = filter_backtrace project, backtrace
     error_line = filtered_backtrace.first
-    
+
     # build subject by removing method name and '[RAILS_ROOT]', make sure it fits in a varchar
     subject = redmine_params[:environment] ? "[#{redmine_params[:environment]}] " : ""
-    subject << error_class.to_s
-    
+    subject << error_class
     subject << " in #{cleanup_path( error_line['file'] )[0,(250-subject.length)]}:#{error_line['number']}" if error_line
-    
+
     # build description including a link to source repository
     description = "Redmine Notifier reported an Error"
     unless filtered_backtrace.blank?
@@ -67,14 +66,14 @@ class NoticesController < ActionController::Base
 
       ensure_project_has_fields(project)
       ensure_tracker_has_fields(tracker)
-      
+
       # set custom field error class
       issue.custom_values.build(:custom_field => @error_class_field, :value => error_class)
       unless redmine_params[:environment].blank?
         issue.custom_values.build(:custom_field => @environment_field, :value => redmine_params[:environment])
       end
     end
-
+    issue.skip_notification = true
     issue.save!
 
     # increment occurences custom field
@@ -99,20 +98,13 @@ class NoticesController < ActionController::Base
     end
 
     issue.save!
-
-    if issue.new_record?
-      Mailer.deliver_issue_add(issue) if Setting.notified_events.include?('issue_added')
-    else
-      Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
-    end
-    
     render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
   end
-  
+
   def format_hash(hash)
     PP.pp hash, ""
   end
-  
+
   # transforms the old-style notice structure into the hoptoad v2 data format
   def v2_notice_hash(notice)
     notice_hash = { 
