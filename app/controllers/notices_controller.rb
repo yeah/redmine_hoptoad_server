@@ -61,7 +61,7 @@ class NoticesController < ActionController::Base
     if issue.new_record?
       # set standard redmine issue fields
       issue.category = IssueCategory.find_by_name(redmine_params[:category]) unless redmine_params[:category].blank?
-      issue.assigned_to = User.find_by_login(redmine_params[:assigned_to]) unless redmine_params[:assigned_to].blank?
+      issue.assigned_to = (User.find_by_login(redmine_params[:assigned_to]) || Group.find_by_lastname(redmine_params[:assigned_to])) unless redmine_params[:assigned_to].blank?
       issue.priority_id = redmine_params[:priority] unless redmine_params[:priority].blank?
       issue.description = description
 
