@@ -1,4 +1,5 @@
 require 'redmine'
+require 'dispatcher'
 
 begin
   gem 'nokogiri'
