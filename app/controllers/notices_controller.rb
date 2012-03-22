@@ -127,7 +127,7 @@ class NoticesController < ActionController::Base
   end
 
   def filter_backtrace(project, backtrace)
-    project_trace_filters = ((project.custom_value_for(@trace_filter_field).value rescue '') || '').split(/[,\s\n\r]+/)
+    project_trace_filters = project.custom_value_for(@trace_filter_field).value.split(/[,\s\n\r]+/) rescue []
     backtrace.reject do |line|
       (TRACE_FILTERS + project_trace_filters).map do |filter|
         line['file'].scan(filter)
