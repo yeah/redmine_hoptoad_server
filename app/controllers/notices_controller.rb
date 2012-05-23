@@ -27,9 +27,23 @@ class NoticesController < ActionController::Base
   private
 
   def create_or_update_issue(redmine_params, notice)
-    # redmine objects
-    project = Project.find_by_identifier(redmine_params[:project])
-    tracker = project.trackers.find_by_name(redmine_params[:tracker])
+    # retrieve redmine objects referenced in redmine_params
+
+    # project
+    unless project = Project.find_by_identifier(redmine_params[:project])
+      msg = "could not log error, project #{redmine_params[:project]} not found."
+      Rails.logger.error msg
+      render :text => msg, :status => 404 and return
+    end
+
+    # tracker
+    unless tracker = project.trackers.find_by_name(redmine_params[:tracker])
+      msg = "could not log error, tracker #{redmine_params[:tracker]} not found."
+      Rails.logger.error msg
+      render :text => msg, :status => 404 and return
+    end
+
+    # user
     author = User.find_by_login(redmine_params[:author]) || User.anonymous
 
     # error class and message
@@ -87,6 +101,7 @@ class NoticesController < ActionController::Base
     # create the journal entry, update issue attributes
     retried_once = false # we retry once in case of a StaleObjectError
     begin
+      issue = Issue.find issue.id # otherwise the save below resets the custom value from above. Also should reduce the chance to run into the staleobject problem.
       # update journal
       text = "h4. Error message\n\n<pre>#{error_message}</pre>"
       text << "\n\nh4. Filtered backtrace\n\n<pre>#{format_backtrace(filtered_backtrace)}</pre>" unless filtered_backtrace.blank?
@@ -109,7 +124,6 @@ class NoticesController < ActionController::Base
         Rails.logger.error "airbrake server: failed to update issue #{issue.id} for the second time, giving up."
       else
         retried_once = true
-        issue = Issue.find issue.id
         retry
       end
     end
