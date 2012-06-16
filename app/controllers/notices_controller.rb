@@ -113,7 +113,7 @@ class NoticesController < ActionController::Base
         retry
       end
     end
-    render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>"
+    render :status => 200, :text => "Received bug report.\n<error-id>#{issue.id}</error-id>\n<id>#{issue.id}</id>" # newer Airbrake expects just <id>...
   end
 
   def format_hash(hash)
