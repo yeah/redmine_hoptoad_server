@@ -13,14 +13,14 @@ class NoticesController < ActionController::Base
   ]
 
   def index_v2
-    logger.debug {"received v2 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
+    #logger.debug {"received v2 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
     create_or_update_issue @redmine_params, @notice
   end
 
   def index
-    logger.debug {"received v1 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
+    #logger.debug {"received v1 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
     notice = v2_notice_hash(@notice)
-    logger.debug {"transformed arguments:\n#{notice.inspect}"}
+    #logger.debug {"transformed arguments:\n#{notice.inspect}"}
     create_or_update_issue @redmine_params, notice
   end
 
@@ -136,12 +136,15 @@ class NoticesController < ActionController::Base
 
   # transforms the old-style notice structure into the hoptoad v2 data format
   def v2_notice_hash(notice)
-    notice_hash = { 
+    {
       'error' => {
-        'class' => @notice['error_class'],
-        'message' => @notice['error_message'],
-        'backtrace' => parse_backtrace(@notice['back'].blank? ? @notice['backtrace'] : @notice['back'])
-      }
+        'class' => notice['error_class'],
+        'message' => notice['error_message'],
+        'backtrace' => parse_backtrace(notice['back'].blank? ? notice['backtrace'] : notice['back'])
+      },
+      'environment' => (notice['server_environment'].blank? ? notice['environment'] : notice['server_environment']),
+      'session' => notice['session'],
+      'request' => notice['request']
     }
   end
 
