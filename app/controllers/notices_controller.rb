@@ -154,16 +154,23 @@ class NoticesController < ActionController::Base
         { 'number' => $2.to_i, 'method' => $4, 'file' => $1 }
       else
         logger.error "could not parse backtrace line:\n#{line}"
+        nil
       end
-    end
+    end.compact
   end
 
   def filter_backtrace(project, backtrace)
     project_trace_filters = project.custom_value_for(@trace_filter_field).value.split(/[,\s\n\r]+/) rescue []
     backtrace.reject do |line|
-      (TRACE_FILTERS + project_trace_filters).map do |filter|
-        line['file'].scan(filter)
-      end.flatten.compact.uniq.any?
+      file = line['file'] rescue nil
+      if file
+        (TRACE_FILTERS + project_trace_filters).map do |filter|
+          file.scan(filter)
+        end.flatten.compact.uniq.any?
+      else
+        Rails.logger.error "invalid backtrace element #{line.inspect}"
+        true
+      end
     end
   end
 
