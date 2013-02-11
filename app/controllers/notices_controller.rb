@@ -30,21 +30,21 @@ class NoticesController < ActionController::Base
     # retrieve redmine objects referenced in redmine_params
 
     # project
-    unless project = Project.find_by_identifier(redmine_params[:project])
-      msg = "could not log error, project #{redmine_params[:project]} not found."
+    unless project = Project.find_by_identifier(redmine_params["project"])
+      msg = "could not log error, project #{redmine_params["project"]} not found."
       Rails.logger.error msg
       render :text => msg, :status => 404 and return
     end
 
     # tracker
-    unless tracker = project.trackers.find_by_name(redmine_params[:tracker])
-      msg = "could not log error, tracker #{redmine_params[:tracker]} not found."
+    unless tracker = project.trackers.find_by_name(redmine_params["tracker"])
+      msg = "could not log error, tracker #{redmine_params["tracker"]} not found."
       Rails.logger.error msg
       render :text => msg, :status => 404 and return
     end
 
     # user
-    author = User.find_by_login(redmine_params[:author]) || User.anonymous
+    author = User.find_by_login(redmine_params["author"]) || User.anonymous
 
     # error class and message
     error_class = notice['error']['class'].to_s
@@ -56,14 +56,14 @@ class NoticesController < ActionController::Base
     error_line = filtered_backtrace.first
 
     # build subject by removing method name and '[RAILS_ROOT]', make sure it fits in a varchar
-    subject = redmine_params[:environment] ? "[#{redmine_params[:environment]}] " : ""
+    subject = redmine_params["environment"] ? "[#{redmine_params["environment"]}] " : ""
     subject << error_class
     subject << " in #{cleanup_path( error_line['file'] )[0,(250-subject.length)]}:#{error_line['number']}" if error_line
 
     # build description including a link to source repository
     description = "Redmine Notifier reported an Error"
     unless filtered_backtrace.blank?
-      repo_root = redmine_params[:repository_root]
+      repo_root = redmine_params["repository_root"]
       repo_root ||= project.custom_value_for(@repository_root_field).value.gsub(/\/$/,'') rescue nil
       description << " related to source:#{repo_root}/#{cleanup_path error_line['file']}#L#{error_line['number']}"
     end
@@ -74,9 +74,9 @@ class NoticesController < ActionController::Base
       issue = Issue.new(:subject => subject, :project_id => project.id, :tracker_id => tracker.id, :author_id => author.id)
 
       # set standard redmine issue fields
-      issue.category = IssueCategory.find_by_name(redmine_params[:category]) unless redmine_params[:category].blank?
-      issue.assigned_to = (User.find_by_login(redmine_params[:assigned_to]) || Group.find_by_lastname(redmine_params[:assigned_to])) unless redmine_params[:assigned_to].blank?
-      issue.priority_id = redmine_params[:priority] unless redmine_params[:priority].blank?
+      issue.category = IssueCategory.find_by_name(redmine_params["category"]) unless redmine_params["category"].blank?
+      issue.assigned_to = (User.find_by_login(redmine_params["assigned_to"]) || Group.find_by_lastname(redmine_params["assigned_to"])) unless redmine_params["assigned_to"].blank?
+      issue.priority_id = redmine_params["priority"] unless redmine_params["priority"].blank?
       issue.description = description
 
       ensure_project_has_fields(project)
@@ -84,8 +84,8 @@ class NoticesController < ActionController::Base
 
       # set custom field error class
       issue.custom_values.build(:custom_field => @error_class_field, :value => error_class)
-      unless redmine_params[:environment].blank?
-        issue.custom_values.build(:custom_field => @environment_field, :value => redmine_params[:environment])
+      unless redmine_params["environment"].blank?
+        issue.custom_values.build(:custom_field => @environment_field, :value => redmine_params["environment"])
       end
       issue.skip_notification = true
       issue.save!
@@ -212,7 +212,12 @@ class NoticesController < ActionController::Base
     else
       raise 'unknown action'
     end
-    @api_key = @redmine_params[:api_key]
+    @redmine_params = @redmine_params.inject({}) do |parameters, (k, v)|
+      parameters[k.to_s.gsub(/^:/, "")] = v
+      parameters
+    end
+
+    @api_key = @redmine_params["api_key"]
     true
   end
 
