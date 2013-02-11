@@ -204,11 +204,11 @@ class NoticesController < ActionController::Base
         # this leads to sub-optimal results for request and session info.
         @notice = params[:notice]
         @notice['error']['backtrace'] = @notice['error']['backtrace']['line']
-        @redmine_params = YAML.load(@notice['api_key'])
+        @redmine_params = YAML.load(@notice['api_key'], :safe => true)
       end
     when 'index'
-      @notice = YAML.load(request.raw_post)['notice']
-      @redmine_params = YAML.load(@notice['api_key'])
+      @notice = YAML.load(request.raw_post, :safe => true)['notice']
+      @redmine_params = YAML.load(@notice['api_key'], :safe => true)
     else
       raise 'unknown action'
     end
