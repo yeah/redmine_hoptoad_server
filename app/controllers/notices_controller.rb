@@ -12,12 +12,12 @@ class NoticesController < ActionController::Base
     /^\d+:/
   ]
 
-  def index_v2
+  def create_v2
     #logger.debug {"received v2 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
     create_or_update_issue @redmine_params, @notice
   end
 
-  def index
+  def create
     #logger.debug {"received v1 request:\n#{@notice.inspect}\nwith redmine_params:\n#{@redmine_params.inspect}"}
     notice = v2_notice_hash(@notice)
     #logger.debug {"transformed arguments:\n#{notice.inspect}"}
@@ -76,7 +76,9 @@ class NoticesController < ActionController::Base
       # set standard redmine issue fields
       issue.category = IssueCategory.find_by_name(redmine_params["category"]) unless redmine_params["category"].blank?
       issue.assigned_to = (User.find_by_login(redmine_params["assigned_to"]) || Group.find_by_lastname(redmine_params["assigned_to"])) unless redmine_params["assigned_to"].blank?
-      issue.priority_id = redmine_params["priority"] unless redmine_params["priority"].blank?
+      issue.priority_id = redmine_params["priority"].blank? ?
+        IssuePriority.default.id :
+        redmine_params["priority"]
       issue.description = description
 
       ensure_project_has_fields(project)
@@ -195,7 +197,7 @@ class NoticesController < ActionController::Base
   def parse_request
     logger.debug { "hoptoad error notification:\n#{request.raw_post}" }
     case params[:action]
-    when 'index_v2'
+    when 'create_v2'
       if defined?(Nokogiri)
         @notice = HoptoadV2Notice.new request.raw_post
         @redmine_params = @notice.redmine_params
@@ -206,7 +208,7 @@ class NoticesController < ActionController::Base
         @notice['error']['backtrace'] = @notice['error']['backtrace']['line']
         @redmine_params = YAML.load(@notice['api_key'], :safe => true)
       end
-    when 'index'
+    when 'create'
       @notice = YAML.load(request.raw_post, :safe => true)['notice']
       @redmine_params = YAML.load(@notice['api_key'], :safe => true)
     else
@@ -226,31 +228,31 @@ class NoticesController < ActionController::Base
     @error_class_field = IssueCustomField.find_or_initialize_by_name('Error class')
     if @error_class_field.new_record?
       @error_class_field.attributes = {:field_format => 'string', :searchable => true, :is_filter => true}
-      @error_class_field.save(false)
+      @error_class_field.save(:validate => false)
     end
 
     @occurences_field = IssueCustomField.find_or_initialize_by_name('# Occurences')
     if @occurences_field.new_record?
       @occurences_field.attributes = {:field_format => 'int', :default_value => '0', :is_filter => true}
-      @occurences_field.save(false)
+      @occurences_field.save(:validate => false)
     end
 
     @environment_field = IssueCustomField.find_or_initialize_by_name('Environment')
     if @environment_field.new_record?
       @environment_field.attributes = {:field_format => 'string', :searchable => true, :is_filter => true}
-      @environment_field.save(false)
+      @environment_field.save(:validate => false)
     end
 
     @trace_filter_field = ProjectCustomField.find_or_initialize_by_name('Backtrace filter')
     if @trace_filter_field.new_record?
       @trace_filter_field.attributes = {:field_format => 'text'}
-      @trace_filter_field.save(false)
+      @trace_filter_field.save(:validate => false)
     end
 
     @repository_root_field = ProjectCustomField.find_or_initialize_by_name('Repository root')
     if @repository_root_field.new_record?
       @repository_root_field.attributes = {:field_format => 'string'}
-      @repository_root_field.save(false)
+      @repository_root_field.save(:validate => false)
     end
   end
 
