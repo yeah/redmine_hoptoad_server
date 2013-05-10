@@ -64,6 +64,16 @@ You may use the :repository_root option in your application's airbrake.rb to ove
 setting with a custom value. This is helful in case you have multiple applications in the same
 repository reporting errors to the same Redmine project.
 
+==== Dependencies
+
+Safe YAML (https://github.com/dtao/safe_yaml).
+For parsing Airbrake v2 requests the plugin also depends on Nokogiri.
+
+Add to your Redmine's Gemfile.local:
+
+gem 'safe_yaml'
+gem 'nokogiri'
+
 == License
 
 MIT
