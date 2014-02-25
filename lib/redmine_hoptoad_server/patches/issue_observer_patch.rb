@@ -1,3 +1,5 @@
+require_dependency 'issue_observer'
+
 module RedmineHoptoadServer
   module Patches
     module IssueObserverPatch
@@ -15,3 +17,5 @@ module RedmineHoptoadServer
     end
   end
 end
+
+IssueObserver.send(:include, RedmineHoptoadServer::Patches::IssueObserverPatch) unless IssueObserver.included_modules.include?(RedmineHoptoadServer::Patches::IssueObserverPatch)
