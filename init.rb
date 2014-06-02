@@ -15,6 +15,5 @@ end
 
 Rails.configuration.to_prepare do
   require_dependency 'redmine_hoptoad_server/patches/issue_patch'
-  require_dependency 'redmine_hoptoad_server/patches/issue_observer_patch'
 end
 
