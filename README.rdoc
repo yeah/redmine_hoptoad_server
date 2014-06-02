@@ -71,8 +71,8 @@ For parsing Airbrake v2 requests the plugin also depends on Nokogiri.
 
 Add to your Redmine's Gemfile.local:
 
-gem 'safe_yaml'
-gem 'nokogiri'
+    gem 'safe_yaml'
+    gem 'nokogiri'
 
 == License
 
