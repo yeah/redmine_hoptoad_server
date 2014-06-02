@@ -4,7 +4,9 @@ Redmine::Plugin.register :redmine_hoptoad_server do
   author_url 'https://plan.io/team/#jan'
   description 'Turns Redmine into an Airbrake/Hoptoad compatible server, i.e. an API provider which can be used with the Airbrake gem or the hoptoad_notifier plugin.'
   url 'http://github.com/yeah/redmine_hoptoad_server'
-  version '0.0.2'
+  version '1.0.0'
+
+  requires_redmine :version_or_higher => '2.4.0'
 end
 
 begin
