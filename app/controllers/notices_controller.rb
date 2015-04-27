@@ -188,7 +188,7 @@ class NoticesController < ActionController::Base
   def check_enabled
     User.current = nil
     parse_request
-    unless @api_key == Setting.mail_handler_api_key
+    unless @api_key.present? and @api_key == Setting.mail_handler_api_key
       render :text => 'Access denied. Redmine API is disabled or key is invalid.', :status => 403
       false
     end

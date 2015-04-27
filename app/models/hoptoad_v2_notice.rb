@@ -3,7 +3,7 @@ class HoptoadV2Notice
 
   def initialize(data)
     xml = Nokogiri::XML(data)
-    @redmine_params = YAML.load(xml.xpath('//api-key').first, :safe => true)
+    @redmine_params = YAML.load(xml.xpath('//api-key').first.content, :safe => true) rescue {}
 
     error = {
       'class' => (xml.xpath('//error/class').first.content rescue nil),
