@@ -5,6 +5,7 @@ Redmine::Plugin.register :redmine_hoptoad_server do
   description 'Turns Redmine into an Airbrake/Hoptoad compatible server, i.e. an API provider which can be used with the Airbrake gem or the hoptoad_notifier plugin.'
   url 'http://github.com/yeah/redmine_hoptoad_server'
   version '1.0.0'
+  hidden(true) if respond_to?(:hidden) # hide plugin in Planio
 
   requires_redmine :version_or_higher => '2.4.0'
 end
