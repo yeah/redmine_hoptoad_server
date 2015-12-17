@@ -1,4 +1,4 @@
-gem 'nokogiri', "~> 1.6.6.4"
+gem 'nokogiri', ">= 1.6.7.1"
 
 group :test do
   gem 'airbrake'
