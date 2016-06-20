@@ -85,10 +85,12 @@ class NoticesController < ActionController::Base
       ensure_tracker_has_fields(tracker)
 
       # set custom field error class
-      issue.custom_values.build(:custom_field => @error_class_field, :value => error_class)
+      cf_values = { @error_class_field.id => error_class,
+                    @occurences_field.id => 0 }
       unless redmine_params["environment"].blank?
-        issue.custom_values.build(:custom_field => @environment_field, :value => redmine_params["environment"])
+        cf_values[@environment_field.id] = redmine_params["environment"]
       end
+      issue.custom_field_values = cf_values
       issue.skip_notification = true
       issue.save!
     end
