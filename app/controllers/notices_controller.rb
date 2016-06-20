@@ -86,21 +86,22 @@ class NoticesController < ActionController::Base
 
       # set custom field error class
       cf_values = { @error_class_field.id => error_class,
-                    @occurences_field.id => 0 }
+                    @occurences_field.id => 1 }
       unless redmine_params["environment"].blank?
         cf_values[@environment_field.id] = redmine_params["environment"]
       end
       issue.custom_field_values = cf_values
       issue.skip_notification = true
       issue.save!
+    else
+      # increment occurences custom field
+      if value = issue.custom_value_for(@occurences_field)
+        value.update_attribute :value, (value.value.to_i + 1).to_s
+      else
+        issue.custom_values.create!(:value => 1, :custom_field => @occurences_field)
+      end
     end
 
-    # increment occurences custom field
-    if value = issue.custom_value_for(@occurences_field)
-      value.update_attribute :value, (value.value.to_i + 1).to_s
-    else
-      issue.custom_values.create!(:value => 1, :custom_field => @occurences_field)
-    end
 
     # create the journal entry, update issue attributes
     retried_once = false # we retry once in case of a StaleObjectError
