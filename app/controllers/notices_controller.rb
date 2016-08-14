@@ -120,7 +120,7 @@ class NoticesController < ActionController::Base
 
       # reopen issue if needed
       if issue.status.blank? or issue.status.is_closed?
-        issue.status = IssueStatus.find(:first, :conditions => {:is_default => true}, :order => 'position ASC')
+        issue.status = issue.tracker.default_status
       end
 
       issue.save!
